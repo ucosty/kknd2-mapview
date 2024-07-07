@@ -1,0 +1,9 @@
+[package]
+name = "kknd2-mapview"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+speedy2d = "2.1.0"
+byteorder = "1.5.0"
+rfd = "0.14.1"
