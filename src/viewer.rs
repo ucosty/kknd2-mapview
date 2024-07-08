@@ -38,6 +38,7 @@ impl MapView {
     pub fn new(font: Font, event_sender: UserEventSender<MapViewEvent>) -> MapView {
         MapView {
             tiles: Default::default(),
+
             images_loaded: false,
             map: None,
             pan_up: false,
@@ -95,23 +96,24 @@ impl MapView {
         let map_height_pixels = map.layers[0].map_height * tile_height;
 
         // TODO: probably need to figure out the panning speed based on framerate
-        if self.pan_up && self.offset_y > 4 {
-            self.offset_y = self.offset_y - 4;
+        let pan_speed = 16;
+        if self.pan_up && self.offset_y > pan_speed {
+            self.offset_y = self.offset_y - pan_speed;
             require_redraw = true;
         }
 
         if self.pan_down && (self.offset_y + window_size.y < map_height_pixels) {
-            self.offset_y = self.offset_y + 4;
+            self.offset_y = self.offset_y + pan_speed;
             require_redraw = true;
         }
 
-        if self.pan_left && self.offset_x > 4 {
-            self.offset_x = self.offset_x - 4;
+        if self.pan_left && self.offset_x > pan_speed {
+            self.offset_x = self.offset_x - pan_speed;
             require_redraw = true;
         }
 
         if self.pan_right && (self.offset_x + window_size.x < map_width_pixels) {
-            self.offset_x = self.offset_x + 4;
+            self.offset_x = self.offset_x + pan_speed;
             require_redraw = true;
         }
 
