@@ -13,6 +13,8 @@ use crate::decompress::decompress;
 use crate::unpack;
 use crate::unpack::{FileEntry, unpack};
 
+const DATA_HEADER_SIZE: u32 = 8;
+
 struct Colour {
     r: u8,
     g: u8,
@@ -87,6 +89,8 @@ fn read_layer<R: Read + Seek>(
     let map_height = reader.read_u32::<LittleEndian>()?;
 
     // Skip some unknown data
+    // FIXME: not unknown now
+    // it is layer_width_pixels, layer_height_pixels, then something unknown
     reader.seek_relative(12)?;
 
     let map_size = (map_width * map_height) as usize;
@@ -100,10 +104,14 @@ fn read_layer<R: Read + Seek>(
 
         let offset = tile_id - (tile_id % 4);
 
+        if offset == 0 {
+            continue;
+        }
+
         if !tiles.contains_key(&offset) {
             let raw_tile = read_raw_tile(
                 &mut *reader,
-                (offset + file_offsets) as u64,
+                (offset + DATA_HEADER_SIZE - file_offsets) as u64,
                 tile_width,
                 tile_height,
             )?;
@@ -126,9 +134,8 @@ pub fn parse_map<R: Read + Seek>(
     reader: &mut BufReader<R>,
     file_offsets: u32,
 ) -> Result<Map, Box<dyn Error>> {
-    // Skip some unknown data
+    // Skip some unknown data (probably a version number)
     reader.seek_relative(4)?;
-
     let layers = reader.read_u32::<LittleEndian>()?;
 
     let mut layer_offsets = Vec::<u64>::new();
@@ -153,7 +160,7 @@ pub fn parse_map<R: Read + Seek>(
     let mut map_layers = Vec::<MapLayer>::new();
 
     for i in 0..layers as usize {
-        reader.seek(SeekFrom::Start(layer_offsets[i] + file_offsets as u64))?;
+        reader.seek(SeekFrom::Start(layer_offsets[i] + DATA_HEADER_SIZE as u64 - file_offsets as u64))?;
 
         let layer_magic = reader.read_u32::<LittleEndian>()?;
         if layer_magic != 0x5343524c {

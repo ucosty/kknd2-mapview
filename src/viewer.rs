@@ -56,30 +56,19 @@ impl MapView {
         let map = &mut self.map.as_ref().unwrap();
 
         if !self.images_loaded {
-            for index in map.layers[0].tiles.keys() {
-                let data = &map.layers[0].tiles.get(index).unwrap().pixels;
-                let tile = graphics
-                    .create_image_from_raw_pixels(
-                        ImageDataType::RGBA,
-                        ImageSmoothingMode::NearestNeighbor,
-                        (32, 32),
-                        data.as_slice(),
-                    )
-                    .unwrap();
-                self.tiles.insert(*index, tile);
-            }
-
-            for index in map.layers[1].tiles.keys() {
-                let data = &map.layers[1].tiles.get(index).unwrap().pixels;
-                let tile = graphics
-                    .create_image_from_raw_pixels(
-                        ImageDataType::RGBA,
-                        ImageSmoothingMode::NearestNeighbor,
-                        (32, 32),
-                        data.as_slice(),
-                    )
-                    .unwrap();
-                self.tiles.insert(*index, tile);
+            for l in 0..map.layers.len() {
+                for index in map.layers[l].tiles.keys() {
+                    let data = &map.layers[l].tiles.get(index).unwrap().pixels;
+                    let tile = graphics
+                        .create_image_from_raw_pixels(
+                            ImageDataType::RGBA,
+                            ImageSmoothingMode::NearestNeighbor,
+                            (32, 32),
+                            data.as_slice(),
+                        )
+                        .unwrap();
+                    self.tiles.insert(*index, tile);
+                }
             }
 
             self.images_loaded = true;
@@ -124,22 +113,22 @@ impl MapView {
         let pixel_offset_y = self.offset_y % tile_height;
 
         // Calculate the screen width in tiles
-        let screen_width_tiles = window_size.x / tile_width;
+        let screen_width_tiles = std::cmp::min(window_size.x / tile_width, map.layers[0].map_width);
         let screen_width_tiles = if pixel_offset_x > 0
             && (tile_offset_x + screen_width_tiles < map.layers[0].map_width)
         {
-            (window_size.x / tile_width) + 1
+            screen_width_tiles + 1
         } else {
-            window_size.x / tile_width
+            screen_width_tiles
         };
 
-        let screen_height_tiles = window_size.y / tile_height;
+        let screen_height_tiles = std::cmp::min(window_size.y / tile_height, map.layers[0].map_height);
         let screen_height_tiles = if pixel_offset_y > 0
             && (tile_offset_y + screen_height_tiles < map.layers[0].map_height)
         {
-            (window_size.y / tile_height) + 1
+            screen_height_tiles + 1
         } else {
-            window_size.y / tile_height
+            screen_height_tiles
         };
 
         graphics.clear_screen(Color::BLACK);
